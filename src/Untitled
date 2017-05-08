@@ -1,0 +1,61 @@
+
+
+Each project in the list of projects that the user has added to Firebase should link to a more de
+
+this.state.project holds all the projects. You should be able to pass it down as a prop.
+
+call it miniprojectlink.
+
+create a new component.
+
+make {this.props.project.map( (obj , index) => {
+return (
+  <li key={index}>
+  <h3> My Firebase </h3>
+    <p> {obj.name} </p>
+    <p> {obj.key} </p>
+    <p> {index} </p>
+    {obj.description}
+  </li>
+)
+})
+}
+
+now we need to make it where through the information that we have is used as a parameter in our next api call so we can display it in our next page
+
+
+create a new component
+
+
+
+
+
+
+
+<Link to={`${obj.id}`}> More Details </Link>
+
+
+
+
+
+
+
+
+
+<Route path="/:filter?" render={(pickles) => <Main
+              toggleComplete={this.toggleComplete.bind(this)}
+              updateTodo={this.updateTodo.bind(this)}
+              deleteTodo={this.deleteTodo.bind(this)}
+              todos={this.state.todos}
+              {...pickles} />} />
+
+
+              the project owner's name, avatar, and link to the owner's account page (on GitHub)
+              the project's creation date, updated date, homepage (if applicable), language(s), open issue count, plus the information in the project search page
+              the project page will also include space for the user to add comments about that project, which will be stored in Firebase
+
+
+
+
+
+Put the Ajax call in a seperate component 

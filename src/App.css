@@ -1,5 +1,7 @@
 .App {
   text-align: center;
+  background-color: #FF4500;
+  color: #F0FFF0;
 }
 
 .App-logo {
@@ -31,6 +33,48 @@ li{
   list-style: none;
 }
 
+header{
+  background-color: #B0C4DE;
+}
+
+.loginOrLogoutButton{
+  position: absolute;
+  top: 30px;
+  left: 900px;
+}
+
 .git-fire{
   display: flex;
+  text-align: center;
+}
+
+.myFirebase{
+  text-align: left;
+  width: 400px;
+  padding: 5px;
+}
+
+.comment{
+  background-color: #B0C4DE;
+  width: 1400px;
+  margin: 10px;
+  height: 50px;
+  font-size: 25px;
+
+}
+.flex{
+  display: flex;
+}
+
+.boxTwo{
+  text-align: left;
+  justify-content: space-around;
+}
+
+.info{
+  padding: 20px;
+}
+
+.theComments{
+  width: 400px;
 }

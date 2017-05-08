@@ -62,9 +62,12 @@ class App extends Component {
 
   loginOrLogoutButton () {
     if (this.state.user.uid) {
-      return <button onClick={this.logout.bind(this)}>Logout</button>
+      return
+      <button className="loginOrLogoutButton"
+      onClick={this.logout.bind(this)}>Logout</button>
     } else {
-      return <button onClick={this.login.bind(this)}>Login</button>
+      return <button className="loginOrLogoutButton"
+      onClick={this.login.bind(this)}>Login</button>
     }
   }
 
@@ -125,12 +128,6 @@ class App extends Component {
 
     });
   }
-  something () {
-    axios.get(`https://api.github.com/repositories/39316535`)
-    .then( response =>  this.setState({ extraData: response.data,
-    ownerData: response.data.owner }))
-  }
-
 
 
 
@@ -138,21 +135,24 @@ class App extends Component {
     return (
       <Router>
         <div className="App">
+          <header>
+          <h1> Welcome to Git Search </h1>
           <p className="App-intro">
             {this.loginOrLogoutButton()}
           </p>
           {this.formIfLoggedIn()}
+          </header>
           <div className="git-fire">
             {this.displaySearchResults()}
-            <ul>
-              < MiniProject project={this.state.projects} />
+            <ul className="myFirebase">
+              < MiniProject project={this.state.projects}
+              deleteProject={this.deleteProject.bind(this)} />
             </ul>
           </div>
-          <Route exact path="/" component={ProjectSearchResult} />
-          <Route path="/MoreDetail" render={(pickles) => <MoreDetails data={this.state.extraData}
-            ownerData={this.state.ownerData} {...pickles} />} />
-            <button onClick={this.something.bind(this)} >
-            <Link to="/MoreDetails"> Click Me </Link> </button>
+          <Route path="/MoreDetails/:id" render={(pickles) =>
+            <MoreDetails data={this.state.extraData}
+            ownerData={this.state.ownerData}
+            users={this.state.user} {...pickles} />} />
         </div>
       </Router>
     );

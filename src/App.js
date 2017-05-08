@@ -1,152 +1,160 @@
 import React, { Component } from 'react';
-import axios from 'axios'
-import base from './rebase.js';
-import './App.css'
+import axios from 'axios';
+import ProjectSearchResult from './ProjectSearchResult';
+import { BrowserRouter as Router, Route, Link } from 'react-router-dom'
+import base from './rebase';
+import logo from './logo.svg';
+import './App.css';
+import MiniProject from './MiniProject'
+import MoreDetails from './MoreDetails'
 
-// window.base
-
-// I need to access the respo's.
+window.base = base;
 
 class App extends Component {
-  constructor() {
-    super()
+
+  constructor () {
+    super();
     this.state = {
       user: {},
-      Name: "",
-      logged: "You are not logged in",
+      searchResults: {},
+      users: [],
+      projects: [],
+      extraData:{},
+      ownerData:{}
     }
   }
 
-  logIn () {
-    var authHandler = (error, data) => {
-      console.log(error, data)
-      this.setState({
-        user: data.user,
-        logged:"You are logged in"
-      })
-    }
-  base.authWithOAuthPopup('google', authHandler);
+  componentDidMount () {
+    // whenever user logs in or out, run setUserState
+    base.onAuth(this.setUserState.bind(this));
   }
 
-  logOut () {
-    base.unauth()
+  setUserState (user) {
     this.setState({
-      user:{},
-      logged:"You are logged put"
-    })
-  }
-
- loginOrLogOutButton () {
-    if(this.state.user.uid) {
-      return <button className="log" onClick={this.logOut.bind(this)}> log out </button>
-    } else {
-      return <button className="log" onClick={this.logIn.bind(this)}> log in </button>
+      user: user || {}
+    });
+    if (user) {
+      this.offSwitchForProjects = base.syncState(`users/${user.uid}/projects`, {
+        context: this,
+        asArray: true,
+        state: 'projects'
+      });
+      this.offSwitchForUsers = base.syncState(`users/${user.uid}/users`, {
+        context: this,
+        asArray: true,
+        state: 'users'
+      });
     }
   }
 
-  addProjectToFirebase(event) {
+  componentWillUnmount () {
+    base.removeBinding(this.offSwitchForUsers);
+    base.removeBinding(this.offSwitchForProjects);
+  }
+
+  login () {
+    base.authWithOAuthPopup('github', function (){});
+  }
+
+  logout () {
+    base.unauth()
+  }
+
+  loginOrLogoutButton () {
+    if (this.state.user.uid) {
+      return <button onClick={this.logout.bind(this)}>Logout</button>
+    } else {
+      return <button onClick={this.login.bind(this)}>Login</button>
+    }
+  }
+
+  searchGithubProjects (event) {
     event.preventDefault();
     const project = this.projectName.value;
-    const user = this.userName.value;
-    console.log(project)
-    base.push("/" + user + "/project",
-    {data: {name: project}})
-    console.log(null)
+    axios.get(`https://api.github.com/search/repositories?q=${project}&per_page=5`)
+    // .then(response => console.log(response))
+    .then(response => this.setState({ searchResults: response.data }));
+    this.projectName.value = '';
+    console.log(this.state.projects)
   }
 
-  addUserToFirebase(event) {
-    event.preventDefault();
-    const user = this.userName.value;
-    console.log(user)
-    base.push("/" + user + "/",
-    {data: user })
-  }
-
-  getInfo () {
-    base.fetch(`/users/${this.state.user.displayName}/projects`, {
-      context: this,
-      asArray: true,
-    }).then( response => console.log(response))
-  }
-
-  formIfLoggedIn(){
-    if (this.state.user.uid){
+  formIfLoggedIn () {
+    if (this.state.user.uid) {
       return (
-        <form >
-        <input
-        className="something" placeholder="Favorite GitHub Projects"
-        ref={ element => this.projectName = element}/>
-        <button onClick={this.addProjectToFirebase.bind(this)}> Add to Firebase </button>
-        <br />
-        <input
-        className="something" placeholder="Git-Hub users"
-        ref={ element => this.userName = element}/>
-          <button onClick={this.addUserToFirebase.bind(this)}> Add to Firebase </button>
-        </form >
-      )
-    }
-  }
-
-  searchRepo(data){
-    return (
-      <form>
-        <input placeholder="something" />
-      </form>
-    )
-  }
-
-  searchUsersForm(event) {
-    event.preventDefault();
-    let gituser = this.userName.value;
-    console.log(gituser)
-    axios.get(`https://api.github.com/users/` + gituser)
-    .then( response => {
-      let name = response.data.name;
-      let repos = response.data.public_repos;
-      console.log(response)
-      this.setState({
-        Name: name,
-        Repos: repos,
-      })
-      console.log(this.state.Repos)
-    })
-
-  }
-
-  loadSearch () {
-    if(this.state.user.uid){
-      return (
-        <form onSubmit={this.searchUsersForm.bind(this)}>
-          <input placeholder=" Search User "
-          ref={ element => this.userName = element}/>
-          <button > Search User </button>
+        <form onSubmit={this.searchGithubProjects.bind(this)}>
+          <input
+            placeholder='Favorite GitHub Projects'
+            ref={element => this.projectName = element} />
+          <button>Search GitHub Repos </button>
         </form>
       )
     }
   }
-displayData () {
-  var userId = base.auth().currentUser.uid;
-  const user = this.userName.value;
-  console.log(user.v)
-return base.database().ref("/" + user + "/project").once('value').then(function(snapshot) {
-  var username = snapshot.val();
-  console.log(username)
 
-});
-}
+  displaySearchResults () {
+    if (this.state.searchResults.items) {
+      const results = this.state.searchResults;
+      const projectIds = this.state.projects.map(p => p.id);
+      return (
+        <div>
+          <h3>{results.total_count} Results</h3>
+          <ul>
+            {results.items.map((project, index) => {
+              return <ProjectSearchResult key={index} project={project}
+              alreadyInFirebase={projectIds.includes(project.id)}
+              addProject={this.addProject.bind(this)}
+              deleteProject={this.deleteProject.bind(this)} />
+            }
+            )}
+          </ul>
+        </div>
+      )
+    }
+  }
+
+  addProject (project) {
+    const projectData = { name: project.name, id: project.id}
+    this.setState({
+      projects: this.state.projects.concat(projectData)
+    });
+  }
+  deleteProject (project) {
+    const projectData = { name: project.name, id: project.id }
+    this.setState({
+      projects: this.state.projects.filter( obj => obj.id !== project.id )
+
+    });
+  }
+  something () {
+    axios.get(`https://api.github.com/repositories/39316535`)
+    .then( response =>  this.setState({ extraData: response.data,
+    ownerData: response.data.owner }))
+  }
+
+
+
 
   render() {
     return (
-      <div className="App">
-      <h1> {this.state.Name} </h1>
-      <h3 className="logged"> {this.state.logged} </h3>
-        {this.loadSearch()}
-        <div className="App-header">
-        {this.formIfLoggedIn()}
+      <Router>
+        <div className="App">
+          <p className="App-intro">
+            {this.loginOrLogoutButton()}
+          </p>
+          {this.formIfLoggedIn()}
+          <div className="git-fire">
+            {this.displaySearchResults()}
+            <ul>
+              < MiniProject project={this.state.projects} />
+            </ul>
+          </div>
+          <Route exact path="/" component={ProjectSearchResult} />
+          <Route path="/MoreDetail" render={(pickles) => <MoreDetails data={this.state.extraData}
+            ownerData={this.state.ownerData} {...pickles} />} />
+            <button onClick={this.something.bind(this)} >
+            <Link to="/MoreDetails"> Click Me </Link> </button>
         </div>
-        <p className="App-intro"> {this.loginOrLogOutButton()} </p>
-        <button onClick={this.getInfo.bind(this)}> Display Data In FireBase </button>
-      </div>
+      </Router>
     );
   }
 }

@@ -23,14 +23,14 @@
   to { transform: rotate(360deg); }
 }
 
-.log{
-  width: 80px;
-position: absolute;
-top: 45px;
-left: 1270px;
+li{
+  list-style: none;
+}
+.list{
+  text-align: left;
+  list-style: none;
 }
 
-.logged{
-  position: relative;
-  left:600px;
+.git-fire{
+  display: flex;
 }
